@@ -3,205 +3,147 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-    <title>Adatu Fabrika AR</title>
+    <title>Adatu Fabrikas Laika Portāls</title>
+    <!-- A-Frame un MindAR bibliotēkas -->
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+
     <style>
       body {
         margin: 0;
         overflow: hidden;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        background-color: transparent;
       }
-      /* Reālā kameras fona plūsma iPhone un Android pārlūkiem */
-      #camera-feed {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        object-fit: cover;
-        z-index: -1;
-      }
-      a-scene {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        z-index: 1;
-      }
-      #ui-overlay {
+      /* UI paziņojums */
+      #ui-box {
         position: absolute;
-        bottom: 30px;
+        bottom: 25px;
         left: 50%;
         transform: translateX(-50%);
-        width: 86%;
-        max-width: 380px;
-        background: rgba(15, 23, 42, 0.75);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        color: #ffffff;
+        width: 85%;
+        max-width: 360px;
+        background: rgba(18, 18, 18, 0.85);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        color: #fff;
         padding: 14px 20px;
-        border-radius: 22px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-        border: 1px solid rgba(255, 215, 0, 0.3);
+        border-radius: 20px;
+        border: 1px solid rgba(220, 150, 60, 0.4);
         text-align: center;
         z-index: 1000;
-        pointer-events: none;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.6);
       }
-      #ui-overlay h2 {
+      #ui-box h3 {
         margin: 0 0 4px 0;
-        font-size: 17px;
-        letter-spacing: 1.5px;
-        color: #f6d365;
+        font-size: 16px;
+        color: #fca311;
+        letter-spacing: 1px;
         text-transform: uppercase;
       }
-      #ui-overlay p {
+      #ui-box p {
         margin: 0;
         font-size: 13px;
-        color: #e2e8f0;
+        color: #ccc;
       }
     </style>
-
-    <script>
-      // 1. Piekļuve telefona aizmugurējai kamerai
-      window.addEventListener('DOMContentLoaded', () => {
-        const video = document.getElementById('camera-feed');
-        navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" } },
-          audio: false
-        }).then(stream => {
-          video.srcObject = stream;
-        }).catch(err => {
-          console.error("Kameras kļūda:", err);
-        });
-      });
-
-      // 2. Anatomiski precīza šujamadata (ar īstu iegarenu adatas aci)
-      AFRAME.registerComponent('realistic-needle', {
-        init: function () {
-          const group = new THREE.Group();
-          const chromeMaterial = new THREE.MeshStandardMaterial({
-            color: 0xdddddd,
-            metalness: 0.98,
-            roughness: 0.15
-          });
-
-          // Adatas smailais gals (lejasdaļa)
-          const tipGeo = new THREE.CylinderGeometry(0.025, 0.001, 1.2, 32);
-          const tipMesh = new THREE.Mesh(tipGeo, chromeMaterial);
-          tipMesh.position.y = -0.6;
-          group.add(tipMesh);
-
-          // Vidusdaļa
-          const bodyGeo = new THREE.CylinderGeometry(0.025, 0.025, 1.0, 32);
-          const bodyMesh = new THREE.Mesh(bodyGeo, chromeMaterial);
-          bodyMesh.position.y = 0.5;
-          group.add(bodyMesh);
-
-          // Adatas galva ar iegarenu aci (divi paralēli stienīši un noapaļota augša)
-          const eyeLeftGeo = new THREE.CylinderGeometry(0.009, 0.009, 0.35, 16);
-          const eyeLeft = new THREE.Mesh(eyeGeo = eyeLeftGeo, chromeMaterial);
-          eyeLeft.position.set(-0.018, 1.15, 0);
-          group.add(eyeLeft);
-
-          const eyeRight = new THREE.Mesh(eyeLeftGeo, chromeMaterial);
-          eyeRight.position.set(0.018, 1.15, 0);
-          group.add(eyeRight);
-
-          // Noapaļotā augšējā arka
-          const topArchGeo = new THREE.TorusGeometry(0.018, 0.009, 16, 16, Math.PI);
-          const topArch = new THREE.Mesh(topArchGeo, chromeMaterial);
-          topArch.position.set(0, 1.32, 0);
-          group.add(topArch);
-
-          this.el.setObject3D('mesh', group);
-        }
-      });
-
-      // 3. Vijīgs zelta neona diegs, kas precīzi iziet cauri adatas acij
-      AFRAME.registerComponent('golden-thread', {
-        init: function () {
-          const points = [];
-          // Sākums diegam - nāk no aizmugures tieši cauri adatas acij (y = 1.15, z = 0)
-          points.push(new THREE.Vector3(0, 1.4, -0.4));
-          points.push(new THREE.Vector3(0, 1.15, 0)); // Precīzi acī
-          points.push(new THREE.Vector3(0.05, 0.95, 0.25));
-
-          // Vijas uz leju ap adatas korpusu
-          for (let i = 1; i <= 60; i++) {
-            const t = i * 0.18;
-            const r = 0.18 + 0.06 * Math.sin(t * 2);
-            const x = Math.sin(t) * r;
-            const z = Math.cos(t) * r;
-            const y = 0.95 - (i * 0.038);
-            points.push(new THREE.Vector3(x, y, z));
-          }
-
-          const curve = new THREE.CatmullRomCurve3(points);
-          const tubeGeometry = new THREE.TubeGeometry(curve, 80, 0.008, 8, false);
-          
-          const threadMaterial = new THREE.MeshStandardMaterial({
-            color: 0xffb703,
-            emissive: 0xfb8500,
-            emissiveIntensity: 0.9,
-            roughness: 0.3,
-            metalness: 0.7
-          });
-
-          const threadMesh = new THREE.Mesh(tubeGeometry, threadMaterial);
-          this.el.setObject3D('mesh', threadMesh);
-        }
-      });
-    </script>
   </head>
   <body>
-    <!-- Kameras video fons -->
-    <video id="camera-feed" autoplay playsinline muted></video>
-
-    <div id="ui-overlay">
-      <h2>Adatu Fabrika</h2>
-      <p>Ieskaties telpā caur kameras aci</p>
+    <div id="ui-box">
+      <h3>Laika Portāls</h3>
+      <p id="status-text">Pavērsiet kameru pret mērķi pie sienas</p>
     </div>
 
-    <!-- AR Aina ar caurspīdīgu fonu -->
-    <a-scene embedded renderer="alpha: true; antialias: true;">
-      
-      <!-- Spēcīgas gaismas spīdumam un kontrastam telpā -->
-      <a-entity light="type: ambient; intensity: 1.2;"></a-entity>
-      <a-entity light="type: directional; intensity: 2.2;" position="2 4 3"></a-entity>
-      <a-entity light="type: point; intensity: 2.5; distance: 4; color: #ffb703;" position="0 1.2 -1.8"></a-entity>
+    <!-- MindAR aina ar kameras skatu fonā -->
+    <a-scene 
+      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF: 0.0001; filterBeta: 0.01; missTolerance: 6;" 
+      color-space="sRGB" 
+      renderer="colorManagement: true, physicallyCorrectLights" 
+      vr-mode-ui="enabled: false" 
+      device-orientation-permission-ui="enabled: false">
 
-      <a-camera position="0 1.5 0" look-controls="enabled: true"></a-camera>
+      <a-assets>
+        <!-- Vēsturiskās smēdes/ceha fona tekstūra iekšpusē -->
+        <img id="forge360" src="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1600&q=80">
+      </a-assets>
 
-      <!-- ADATA UN DIEGS (Levitē 2 metrus priekšā kamerai) -->
-      <a-entity 
-        position="0 1.2 -2.0" 
-        animation="property: position; to: 0 1.35 -2.0; dir: alternate; dur: 3000; easing: easeInOutSine; loop: true"
-        animation__rot="property: rotation; to: 0 360 0; dur: 18000; easing: linear; loop: true">
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <!-- Īstā tērauda adata -->
-        <a-entity realistic-needle></a-entity>
+      <a-entity id="portalTarget" mindar-image-target="targetIndex: 0">
+        
+        <!-- 1. PORTĀLA IETVARS / ARKA UZ SIENAS (akmens/metāla rāmis) -->
+        <a-ring 
+          position="0 0 0.02" 
+          radius-inner="0.68" 
+          radius-outer="0.82" 
+          material="color: #2b1d0c; roughness: 0.8; metalness: 0.3;"
+          animation="property: scale; from: 0 0 0; to: 1 1 1; dur: 1500; easing: easeOutElastic;">
+        </a-ring>
 
-        <!-- Zelta diegs, kas iet caur aci -->
-        <a-entity golden-thread></a-entity>
+        <!-- Mirdzošā portāla laika spirāles mala -->
+        <a-ring 
+          position="0 0 0.03" 
+          radius-inner="0.66" 
+          radius-outer="0.69" 
+          material="color: #ff9e00; emissive: #e85d04; emissiveIntensity: 1.5;"
+          animation="property: rotation; to: 0 0 360; dur: 10000; easing: linear; loop: true">
+        </a-ring>
 
-        <!-- Spīdums smailes galā -->
+        <!-- 2. IESKATS "AIZ SIENAS" (Dziļuma telpa / kambaris) -->
+        <!-- Cilindrs, kas iestiepjas -1.2 metrus IEKŠĀ SIENĀ -->
+        <a-cylinder 
+          position="0 0 -0.6" 
+          rotation="90 0 0" 
+          radius="0.67" 
+          height="1.2" 
+          open-ended="true" 
+          side="back" 
+          material="src: #forge360; roughness: 0.6;">
+        </a-cylinder>
+
+        <!-- Kambara tālākā aizmugurējā siena ar kalēja ceha skatu -->
+        <a-circle 
+          position="0 0 -1.2" 
+          radius="0.67" 
+          side="front" 
+          material="src: #forge360; roughness: 0.5;">
+        </a-circle>
+
+        <!-- 3. KVĒLOJOŠĀ UGUNS / LAKTA TELPAS DZIĻUMĀ -->
+        <!-- Gaismas avots no smēdes ugunskura aiz sienas -->
+        <a-entity light="type: point; intensity: 3; distance: 3; color: #ff5400;" position="0 -0.2 -0.8"></a-entity>
+        
+        <!-- Kvēlojošas ogles / dzirksteļu imitācija kambara apakšā -->
         <a-sphere 
-          position="0 -1.2 0" 
-          radius="0.015" 
-          material="color: #ffffff; emissive: #38bdf8; emissiveIntensity: 2.5;">
+          position="0 -0.4 -0.9" 
+          radius="0.12" 
+          material="color: #ffba08; emissive: #d00000; emissiveIntensity: 2.2;"
+          animation="property: scale; from: 0.9 0.9 0.9; to: 1.1 1.1 1.1; dir: alternate; dur: 800; loop: true">
         </a-sphere>
 
-        <!-- Skaidri lasāms 3D uzraksts -->
+        <!-- Uzraksts portāla augšpusē -->
         <a-text 
-          value="ADATU FABRIKA" 
-          position="0 -1.45 0" 
+          value="ADATU KALĒJI • 18. GS." 
+          position="0 0.95 0.05" 
           align="center" 
-          scale="0.8 0.8 0.8"
-          color="#ffb703">
+          scale="0.6 0.6 0.6" 
+          color="#ffb703" 
+          font="aileronsemibold">
         </a-text>
+
       </a-entity>
     </a-scene>
+
+    <script>
+      const target = document.querySelector('#portalTarget');
+      const statusText = document.querySelector('#status-text');
+
+      target.addEventListener('targetFound', () => {
+        statusText.innerHTML = "Portāls atvērts! <b>Ieskaties dziļāk sienā</b>";
+      });
+
+      target.addEventListener('targetLost', () => {
+        statusText.innerText = "Pavērsiet kameru pret mērķi pie sienas";
+      });
+    </script>
   </body>
 </html>
