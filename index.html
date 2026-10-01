@@ -14,14 +14,14 @@
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       }
 
-      /* Liela, skaidra poga pa virsu visam kameras skatam */
+      /* Sākuma ekrāns audio un video atļaušanai */
       #startOverlay {
         position: fixed;
         top: 0;
         left: 0;
         width: 100vw;
         height: 100vh;
-        background: rgba(0, 0, 0, 0.6);
+        background: rgba(0, 0, 0, 0.7);
         display: flex;
         justify-content: center;
         align-items: center;
@@ -34,13 +34,13 @@
         color: white;
         border: none;
         border-radius: 35px;
-        font-size: 18px;
+        font-size: 17px;
         font-weight: bold;
         cursor: pointer;
         box-shadow: 0 8px 25px rgba(217, 119, 6, 0.6);
       }
 
-      /* Neliels paziņojums augšā */
+      /* Informācijas josla augšā */
       #statusBox {
         display: none;
         position: absolute;
@@ -73,9 +73,9 @@
     </style>
   </head>
   <body>
-    <!-- Sākuma ekrāns ar pogu audio/video atļaušanai -->
+    <!-- Aktivizācijas logs -->
     <div id="startOverlay">
-      <button id="startBtn">Ieslēgt Laika Portālu (ar skaņu)</button>
+      <button id="startBtn">Ieslēgt Laika Portālu</button>
     </div>
 
     <div id="statusBox">
@@ -91,18 +91,17 @@
       device-orientation-permission-ui="enabled: false">
 
       <a-assets>
-        <!-- playsinline un webkit-playsinline ir obligāti iPhone Safari pārlūkam -->
+        <!-- Noņemts loop, lai video varētu dabiski beigties un aizvērt portālu -->
         <video 
           id="smedeVideo" 
           src="./smede.mp4" 
           preload="auto" 
-          loop 
           crossorigin="anonymous"
           playsinline 
           webkit-playsinline>
         </video>
 
-        <!-- Akmens mūra tekstūra kambara iekšpusei -->
+        <!-- Akmens tekstūra eja iekšpusei -->
         <img id="stoneTexture" src="https://images.unsplash.com/photo-1590069261209-f8e9b8642343?auto=format&fit=crop&w=1000&q=80">
       </a-assets>
 
@@ -110,57 +109,61 @@
 
       <a-entity id="portalTarget" mindar-image-target="targetIndex: 0">
         
-        <!-- 1. Ārējā arka uz virsmas (vecs tumšs dzelzs rāmis) -->
-        <a-ring 
-          position="0 0 0.02" 
-          radius-inner="0.65" 
-          radius-outer="0.82" 
-          material="color: #1c1917; roughness: 0.9;">
-        </a-ring>
+        <!-- VISU PORTĀLU IETVEROŠA GRUPA ar sākotnējo mērogu 0 0 0 (aizvērts) -->
+        <a-entity id="portalContainer" scale="0 0 0" visible="false">
+          
+          <!-- 1. Ārējais dzelzs rāmis -->
+          <a-ring 
+            position="0 0 0.02" 
+            radius-inner="0.65" 
+            radius-outer="0.82" 
+            material="color: #1c1917; roughness: 0.9;">
+          </a-ring>
 
-        <!-- Kvēlojošā laika spirāle -->
-        <a-ring 
-          position="0 0 0.03" 
-          radius-inner="0.63" 
-          radius-outer="0.65" 
-          material="color: #f59e0b; emissive: #d97706; emissiveIntensity: 2.0;"
-          animation="property: rotation; to: 0 0 360; dur: 12000; easing: linear; loop: true">
-        </a-ring>
+          <!-- Kvēlojošā laika spirāle -->
+          <a-ring 
+            position="0 0 0.03" 
+            radius-inner="0.63" 
+            radius-outer="0.65" 
+            material="color: #f59e0b; emissive: #d97706; emissiveIntensity: 2.0;"
+            animation="property: rotation; to: 0 0 360; dur: 12000; easing: linear; loop: true">
+          </a-ring>
 
-        <!-- 2. "Mucas" eja dziļumā (0.8 metrus dziļa, ar akmens tekstūru) -->
-        <a-cylinder 
-          position="0 0 -0.4" 
-          rotation="90 0 0" 
-          radius="0.64" 
-          height="0.8" 
-          open-ended="true" 
-          side="back" 
-          material="src: #stoneTexture; roughness: 0.7; color: #57534e;">
-        </a-cylinder>
+          <!-- 2. Akmens eja dziļumā (0.8 m) -->
+          <a-cylinder 
+            position="0 0 -0.4" 
+            rotation="90 0 0" 
+            radius="0.64" 
+            height="0.8" 
+            open-ended="true" 
+            side="back" 
+            material="src: #stoneTexture; roughness: 0.7; color: #57534e;">
+          </a-cylinder>
 
-        <!-- 3. MUCAS DIBENS AR SMĒDES VIDEO (-0.8 m dziļumā) -->
-        <a-circle 
-          position="0 0 -0.8" 
-          radius="0.64" 
-          side="front" 
-          material="src: #smedeVideo; shader: flat;">
-        </a-circle>
+          <!-- 3. Portāla dibens ar smēdes video -->
+          <a-circle 
+            position="0 0 -0.8" 
+            radius="0.64" 
+            side="front" 
+            material="src: #smedeVideo; shader: flat;">
+          </a-circle>
 
-        <!-- Uguns gaismas pulsācija portāla iekšienē -->
-        <a-entity 
-          light="type: point; intensity: 2.5; distance: 2.5; color: #f97316;" 
-          position="0 0 -0.4"
-          animation="property: light.intensity; from: 1.8; to: 3.2; dir: alternate; dur: 400; loop: true">
+          <!-- Uguns atblāzmas pulsācija portāla iekšpusē -->
+          <a-entity 
+            light="type: point; intensity: 2.5; distance: 2.5; color: #f97316;" 
+            position="0 0 -0.4"
+            animation="property: light.intensity; from: 1.8; to: 3.2; dir: alternate; dur: 400; loop: true">
+          </a-entity>
+
+          <a-text 
+            value="ADATU KALĒJI • 18. GADSIMTS" 
+            position="0 0.95 0.05" 
+            align="center" 
+            scale="0.6 0.6 0.6" 
+            color="#fbbf24">
+          </a-text>
+
         </a-entity>
-
-        <a-text 
-          value="ADATU KALĒJI • 18. GADSIMTS" 
-          position="0 0.95 0.05" 
-          align="center" 
-          scale="0.6 0.6 0.6" 
-          color="#fbbf24">
-        </a-text>
-
       </a-entity>
     </a-scene>
 
@@ -168,34 +171,91 @@
       const startOverlay = document.querySelector('#startOverlay');
       const startBtn = document.querySelector('#startBtn');
       const statusBox = document.querySelector('#statusBox');
+      const statusText = document.querySelector('#status-text');
       const video = document.querySelector('#smedeVideo');
       const target = document.querySelector('#portalTarget');
-      const statusText = document.querySelector('#status-text');
+      const portal = document.querySelector('#portalContainer');
 
-      // Lietotājs nospiež pogu — atbloķē video un audio
+      let openTimer = null;
+      let isPortalOpen = false;
+
+      // Lietotājs atļauj video/audio
       startBtn.addEventListener('click', () => {
         video.play().then(() => {
-          // Ja kamera vēl neredz target, nopauzējam līdz atrašanai
           video.pause();
-        }).catch(err => {
-          console.log("Video atskaņošanas gaidīšana:", err);
-        });
+          video.currentTime = 0;
+        }).catch(() => {});
 
         startOverlay.style.display = 'none';
         statusBox.style.display = 'block';
       });
 
-      // Tiklīdz ierauga medmāsas attēlu
+      // Mērķis atrasts kameras skatā
       target.addEventListener('targetFound', () => {
-        video.play();
-        statusText.innerHTML = "Portāls atvērts! <b>Ieskaties dziļāk atverē</b>";
+        statusText.innerHTML = "Atzīme atrasta. Sinhronizējas ar 18. gs...";
+
+        // 2 sekunžu aizture pirms atvēršanās
+        openTimer = setTimeout(() => {
+          openPortal();
+        }, 2000);
       });
 
-      // Kad attēls pazūd no redzesloka
+      // Mērķis pazaudēts no skata
       target.addEventListener('targetLost', () => {
-        video.pause();
+        if (openTimer) clearTimeout(openTimer);
+        closePortalQuickly();
         statusText.innerText = "Pavērsiet kameru pret attēlu";
       });
+
+      // Portāla lēna atvēršanās
+      function openPortal() {
+        isPortalOpen = true;
+        portal.setAttribute('visible', 'true');
+        statusText.innerHTML = "Portāls atvērts! <b>Ieskaties 18. gadsimtā</b>";
+
+        // Animējam mērogu no 0 līdz 1 divu sekunžu laikā
+        portal.removeAttribute('animation');
+        portal.setAttribute('animation', {
+          property: 'scale',
+          from: '0 0 0',
+          to: '1 1 1',
+          dur: 2000,
+          easing: 'easeOutBack'
+        });
+
+        // Palaižam video un skaņu
+        video.currentTime = 0;
+        video.play();
+      }
+
+      // Video beigu notikums — lēna aizvēršanās
+      video.addEventListener('ended', () => {
+        statusText.innerHTML = "Laika saikne pārtrūka. Portāls aizveras...";
+
+        // Lēni saraujam portālu 1.5 sekunžu laikā
+        portal.removeAttribute('animation');
+        portal.setAttribute('animation', {
+          property: 'scale',
+          from: '1 1 1',
+          to: '0 0 0',
+          dur: 1500,
+          easing: 'easeInQuad'
+        });
+
+        setTimeout(() => {
+          portal.setAttribute('visible', 'false');
+          isPortalOpen = false;
+          statusText.innerText = "Portāls noslēdzies. Pavērsiet kameru no jauna.";
+        }, 1500);
+      });
+
+      // Ātra aizvēršana, ja telefons tiek novērsts projām
+      function closePortalQuickly() {
+        video.pause();
+        portal.setAttribute('visible', 'false');
+        portal.setAttribute('scale', '0 0 0');
+        isPortalOpen = false;
+      }
     </script>
   </body>
 </html>
