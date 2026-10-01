@@ -1,149 +1,186 @@
-<!DOCTYPE html>
-<html lang="lv">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-    <title>Adatu Fabrikas Laika Portāls</title>
-    <!-- A-Frame un MindAR bibliotēkas -->
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+<!-- A-Frame un MindAR bibliotēkas -->
+<script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
 
-    <style>
-      body {
-        margin: 0;
-        overflow: hidden;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      }
-      /* UI paziņojums */
-      #ui-box {
-        position: absolute;
-        bottom: 25px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 85%;
-        max-width: 360px;
-        background: rgba(18, 18, 18, 0.85);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        color: #fff;
-        padding: 14px 20px;
-        border-radius: 20px;
-        border: 1px solid rgba(220, 150, 60, 0.4);
-        text-align: center;
-        z-index: 1000;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-      }
-      #ui-box h3 {
-        margin: 0 0 4px 0;
-        font-size: 16px;
-        color: #fca311;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-      }
-      #ui-box p {
-        margin: 0;
-        font-size: 13px;
-        color: #ccc;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="ui-box">
-      <h3>Laika Portāls</h3>
-      <p id="status-text">Pavērsiet kameru pret mērķi pie sienas</p>
-    </div>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
 
-    <!-- MindAR aina ar kameras skatu fonā -->
-    <a-scene 
-      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF: 0.0001; filterBeta: 0.01; missTolerance: 6;" 
-      color-space="sRGB" 
-      renderer="colorManagement: true, physicallyCorrectLights" 
-      vr-mode-ui="enabled: false" 
-      device-orientation-permission-ui="enabled: false">
+  /* Audio un video atbloķēšanas poga mobilajām ierīcēm */
+  #soundBtn {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 14px 28px;
+    background: linear-gradient(135deg, #d97706, #b45309);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 30px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    z-index: 9999;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(180, 83, 9, 0.5);
+  }
 
-      <a-assets>
-        <!-- Vēsturiskās smēdes/ceha fona tekstūra iekšpusē -->
-        <img id="forge360" src="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1600&q=80">
-      </a-assets>
+  /* Informācijas panelis ekrāna augšdaļā */
+  #ui-box {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 86%;
+    max-width: 360px;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #ffffff;
+    padding: 12px 18px;
+    border-radius: 16px;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    text-align: center;
+    z-index: 1000;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+  }
+  #ui-box h3 {
+    margin: 0 0 3px 0;
+    font-size: 15px;
+    color: #fbbf24;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  #ui-box p {
+    margin: 0;
+    font-size: 12px;
+    color: #cbd5e1;
+  }
+</style>
 
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <a-entity id="portalTarget" mindar-image-target="targetIndex: 0">
-        
-        <!-- 1. PORTĀLA IETVARS / ARKA UZ SIENAS (akmens/metāla rāmis) -->
-        <a-ring 
-          position="0 0 0.02" 
-          radius-inner="0.68" 
-          radius-outer="0.82" 
-          material="color: #2b1d0c; roughness: 0.8; metalness: 0.3;"
-          animation="property: scale; from: 0 0 0; to: 1 1 1; dur: 1500; easing: easeOutElastic;">
-        </a-ring>
+<!-- Paziņojumu josla -->
+<div id="ui-box">
+  <h3>Laika Portāls</h3>
+  <p id="status-text">Pavērsiet kameru pret atzīmi pie sienas</p>
+</div>
 
-        <!-- Mirdzošā portāla laika spirāles mala -->
-        <a-ring 
-          position="0 0 0.03" 
-          radius-inner="0.66" 
-          radius-outer="0.69" 
-          material="color: #ff9e00; emissive: #e85d04; emissiveIntensity: 1.5;"
-          animation="property: rotation; to: 0 0 360; dur: 10000; easing: linear; loop: true">
-        </a-ring>
+<!-- MindAR aina ar kameras attēlu fonā un OneEuro stabilitātes filtriem -->
+<a-scene 
+  mindar-image="imageTargetSrc: ./targets.mind; filterMinCF: 0.0001; filterBeta: 0.01; missTolerance: 6;" 
+  color-space="sRGB" 
+  renderer="colorManagement: true, physicallyCorrectLights" 
+  vr-mode-ui="enabled: false" 
+  device-orientation-permission-ui="enabled: false">
 
-        <!-- 2. IESKATS "AIZ SIENAS" (Dziļuma telpa / kambaris) -->
-        <!-- Cilindrs, kas iestiepjas -1.2 metrus IEKŠĀ SIENĀ -->
-        <a-cylinder 
-          position="0 0 -0.6" 
-          rotation="90 0 0" 
-          radius="0.67" 
-          height="1.2" 
-          open-ended="true" 
-          side="back" 
-          material="src: #forge360; roughness: 0.6;">
-        </a-cylinder>
+  <a-assets>
+    <!-- Vēsturiskais smēdes video fails repozitorijā -->
+    <video 
+      id="forgeVideo" 
+      src="./smede.mp4" 
+      preload="auto" 
+      loop 
+      playsinline 
+      webkit-playsinline>
+    </video>
+  </a-assets>
 
-        <!-- Kambara tālākā aizmugurējā siena ar kalēja ceha skatu -->
-        <a-circle 
-          position="0 0 -1.2" 
-          radius="0.67" 
-          side="front" 
-          material="src: #forge360; roughness: 0.5;">
-        </a-circle>
+  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <!-- 3. KVĒLOJOŠĀ UGUNS / LAKTA TELPAS DZIĻUMĀ -->
-        <!-- Gaismas avots no smēdes ugunskura aiz sienas -->
-        <a-entity light="type: point; intensity: 3; distance: 3; color: #ff5400;" position="0 -0.2 -0.8"></a-entity>
-        
-        <!-- Kvēlojošas ogles / dzirksteļu imitācija kambara apakšā -->
-        <a-sphere 
-          position="0 -0.4 -0.9" 
-          radius="0.12" 
-          material="color: #ffba08; emissive: #d00000; emissiveIntensity: 2.2;"
-          animation="property: scale; from: 0.9 0.9 0.9; to: 1.1 1.1 1.1; dir: alternate; dur: 800; loop: true">
-        </a-sphere>
+  <!-- Portāls, kas piesaistīts pirmajam mērķim no targets.mind -->
+  <a-entity id="portalTarget" mindar-image-target="targetIndex: 0">
+    
+    <!-- 1. Ārējais metāla un akmens rāmis uz sienas virsmas -->
+    <a-ring 
+      position="0 0 0.02" 
+      radius-inner="0.75" 
+      radius-outer="0.92" 
+      material="color: #1f2937; roughness: 0.9; metalness: 0.3;">
+    </a-ring>
 
-        <!-- Uzraksts portāla augšpusē -->
-        <a-text 
-          value="ADATU KALĒJI • 18. GS." 
-          position="0 0.95 0.05" 
-          align="center" 
-          scale="0.6 0.6 0.6" 
-          color="#ffb703" 
-          font="aileronsemibold">
-        </a-text>
+    <!-- 2. Mirdzošā laika spirāles mala ap atveri -->
+    <a-ring 
+      position="0 0 0.03" 
+      radius-inner="0.73" 
+      radius-outer="0.76" 
+      material="color: #f59e0b; emissive: #d97706; emissiveIntensity: 1.8;"
+      animation="property: rotation; to: 0 0 360; dur: 12000; easing: linear; loop: true">
+    </a-ring>
 
-      </a-entity>
-    </a-scene>
+    <!-- 3. Kambaris / tunelis 1.2 metru dziļumā sienā -->
+    <a-cylinder 
+      position="0 0 -0.6" 
+      rotation="90 0 0" 
+      radius="0.74" 
+      height="1.2" 
+      open-ended="true" 
+      side="back" 
+      material="color: #18181b; roughness: 0.95;">
+    </a-cylinder>
 
-    <script>
-      const target = document.querySelector('#portalTarget');
-      const statusText = document.querySelector('#status-text');
+    <!-- 4. Dzīvais vēsturiskās smēdes video tuneļa aizmugurē (-1.2m dziļi iekšā sienā) -->
+    <a-video 
+      src="#forgeVideo" 
+      position="0 0 -1.2" 
+      width="2.1" 
+      height="1.18" 
+      rotation="0 0 0">
+    </a-video>
 
-      target.addEventListener('targetFound', () => {
-        statusText.innerHTML = "Portāls atvērts! <b>Ieskaties dziļāk sienā</b>";
-      });
+    <!-- 5. Kvēlojošās ogļu uguns gaisma telpas dziļumā -->
+    <a-entity 
+      light="type: point; intensity: 3.5; distance: 3.2; color: #f97316;" 
+      position="0 -0.2 -0.8"
+      animation="property: light.intensity; from: 2.8; to: 4.2; dir: alternate; dur: 450; loop: true">
+    </a-entity>
 
-      target.addEventListener('targetLost', () => {
-        statusText.innerText = "Pavērsiet kameru pret mērķi pie sienas";
-      });
-    </script>
-  </body>
-</html>
+    <!-- Kalēja dzirksteļu imitācijas lode -->
+    <a-sphere 
+      position="0 -0.4 -0.9" 
+      radius="0.08" 
+      material="color: #fbbf24; emissive: #ea580c; emissiveIntensity: 3.0;"
+      animation="property: scale; from: 0.8 0.8 0.8; to: 1.25 1.25 1.25; dir: alternate; dur: 350; loop: true">
+    </a-sphere>
+
+    <!-- Hologrāfisks laikmeta nosaukums virs portāla -->
+    <a-text 
+      value="ADATU KALĒJI • 18. GADSIMTS" 
+      position="0 1.08 0.05" 
+      align="center" 
+      scale="0.65 0.65 0.65" 
+      color="#fbbf24" 
+      font="aileronsemibold">
+    </a-text>
+
+  </a-entity>
+</a-scene>
+
+<script>
+  const target = document.querySelector('#portalTarget');
+  const statusText = document.querySelector('#status-text');
+  const soundBtn = document.querySelector('#soundBtn');
+  const video = document.querySelector('#forgeVideo');
+
+  // Lietotāja pieskāriens audio/video atskaņošanas aktivizēšanai
+  soundBtn.addEventListener('click', () => {
+    video.play();
+    video.pause();
+    soundBtn.style.display = 'none';
+    statusText.innerText = "Portāls gatavs! Pavērsiet kameru pret sienu";
+  });
+
+  // Kad kamera atrod mērķa attēlu pie sienas
+  target.addEventListener('targetFound', () => {
+    video.play();
+    statusText.innerHTML = "Portāls atvērts! <b>Ieskaties dziļāk sienā</b>";
+  });
+
+  // Kad kamera pazaudē mērķi
+  target.addEventListener('targetLost', () => {
+    video.pause();
+    statusText.innerText = "Pavērsiet kameru pret atzīmi pie sienas";
+  });
+</script>
