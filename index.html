@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-    <title>Adatu Fabrikas Laika Portāls</title>
+    <title>Adatu Fabrikas Laika Plaisa (4x)</title>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
 
@@ -13,34 +13,29 @@
         overflow: hidden;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       }
-
-      /* Sākuma ekrāns audio un video atļaušanai */
       #startOverlay {
         position: fixed;
         top: 0;
         left: 0;
         width: 100vw;
         height: 100vh;
-        background: rgba(0, 0, 0, 0.7);
+        background: rgba(0, 0, 0, 0.85);
         display: flex;
         justify-content: center;
         align-items: center;
         z-index: 999999;
       }
-
       #startBtn {
-        padding: 16px 32px;
-        background: linear-gradient(135deg, #d97706, #b45309);
+        padding: 18px 36px;
+        background: linear-gradient(135deg, #b91c1c, #450a0a);
         color: white;
-        border: none;
-        border-radius: 35px;
-        font-size: 17px;
+        border: 2px solid #ef4444;
+        border-radius: 40px;
+        font-size: 18px;
         font-weight: bold;
         cursor: pointer;
-        box-shadow: 0 8px 25px rgba(217, 119, 6, 0.6);
+        box-shadow: 0 0 30px rgba(239, 68, 68, 0.7);
       }
-
-      /* Informācijas josla augšā */
       #statusBox {
         display: none;
         position: absolute;
@@ -48,22 +43,22 @@
         left: 50%;
         transform: translateX(-50%);
         width: 85%;
-        max-width: 360px;
-        background: rgba(15, 23, 42, 0.85);
+        max-width: 380px;
+        background: rgba(10, 10, 10, 0.85);
         backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
         color: #fff;
         padding: 12px 18px;
         border-radius: 20px;
-        border: 1px solid rgba(245, 158, 11, 0.4);
+        border: 1px solid rgba(239, 68, 68, 0.5);
         text-align: center;
         z-index: 10000;
       }
       #statusBox h3 {
         margin: 0 0 2px 0;
         font-size: 15px;
-        color: #fbbf24;
-        letter-spacing: 1px;
+        color: #ef4444;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
       }
       #statusBox p {
         margin: 0;
@@ -71,16 +66,64 @@
         color: #cbd5e1;
       }
     </style>
+
+    <script>
+      // Ģenerē milzīgu, neregulāru plaisu (4 reizes lielāka)
+      AFRAME.registerComponent('rift-portal', {
+        init: function () {
+          const shape = new THREE.Shape();
+          const pointsCount = 60;
+          // Pamatrādiuss palielināts 4x: no 0.68 uz 2.72 metriem
+          const radiusBase = 2.72;
+
+          for (let i = 0; i <= pointsCount; i++) {
+            const theta = (i / pointsCount) * Math.PI * 2;
+            const noise = Math.sin(theta * 5) * 0.32 + Math.cos(theta * 3) * 0.20 + (Math.sin(theta * 9) * 0.12);
+            const r = radiusBase + noise;
+            const x = Math.cos(theta) * r;
+            const y = Math.sin(theta) * r * 1.25;
+            if (i === 0) shape.moveTo(x, y);
+            else shape.lineTo(x, y);
+          }
+
+          const geometry = new THREE.ShapeGeometry(shape);
+          
+          const videoEl = document.querySelector('#smedeVideo');
+          const videoTexture = new THREE.VideoTexture(videoEl);
+          videoTexture.minFilter = THREE.LinearFilter;
+          videoTexture.magFilter = THREE.LinearFilter;
+
+          const portalMaterial = new THREE.MeshBasicMaterial({
+            map: videoTexture,
+            side: THREE.DoubleSide
+          });
+
+          const mesh = new THREE.Mesh(geometry, portalMaterial);
+          mesh.position.z = 0.02;
+          this.el.setObject3D('mesh', mesh);
+
+          // Kvēlojošā ārējā līnija
+          const edgePoints = shape.getPoints();
+          const edgeGeometry = new THREE.BufferGeometry().setFromPoints(edgePoints);
+          const edgeMaterial = new THREE.LineBasicMaterial({
+            color: 0xff2200,
+            linewidth: 4
+          });
+          const edgeLine = new THREE.LineLoop(edgeGeometry, edgeMaterial);
+          edgeLine.position.z = 0.03;
+          this.el.setObject3D('edge', edgeLine);
+        }
+      });
+    </script>
   </head>
   <body>
-    <!-- Aktivizācijas logs -->
     <div id="startOverlay">
-      <button id="startBtn">Ieslēgt Laika Portālu</button>
+      <button id="startBtn">Atvērt laika plaisu</button>
     </div>
 
     <div id="statusBox">
-      <h3>LAIKA PORTĀLS</h3>
-      <p id="status-text">Pavērsiet kameru pret attēlu</p>
+      <h3>LAIKA PLAISA</h3>
+      <p id="status-text">Pavērsiet kameru pret atzīmi</p>
     </div>
 
     <a-scene 
@@ -91,7 +134,6 @@
       device-orientation-permission-ui="enabled: false">
 
       <a-assets>
-        <!-- Noņemts loop, lai video varētu dabiski beigties un aizvērt portālu -->
         <video 
           id="smedeVideo" 
           src="./smede.mp4" 
@@ -100,67 +142,41 @@
           playsinline 
           webkit-playsinline>
         </video>
-
-        <!-- Akmens tekstūra eja iekšpusei -->
-        <img id="stoneTexture" src="https://images.unsplash.com/photo-1590069261209-f8e9b8642343?auto=format&fit=crop&w=1000&q=80">
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
       <a-entity id="portalTarget" mindar-image-target="targetIndex: 0">
         
-        <!-- VISU PORTĀLU IETVEROŠA GRUPA ar sākotnējo mērogu 0 0 0 (aizvērts) -->
+        <!-- PLAISAS KONTEINERS -->
         <a-entity id="portalContainer" scale="0 0 0" visible="false">
           
-          <!-- 1. Ārējais dzelzs rāmis -->
+          <!-- Milzīgā organiskā plaisa ar video -->
+          <a-entity rift-portal></a-entity>
+
+          <!-- 4x lielāks ārējais enerģijas oreols (rādiuss 2.6m - 3.4m) -->
           <a-ring 
-            position="0 0 0.02" 
-            radius-inner="0.65" 
-            radius-outer="0.82" 
-            material="color: #1c1917; roughness: 0.9;">
+            position="0 0 0.01" 
+            radius-inner="2.6" 
+            radius-outer="3.4" 
+            material="color: #7f1d1d; emissive: #dc2626; emissiveIntensity: 1.8; opacity: 0.65; transparent: true;"
+            animation="property: scale; from: 0.96 0.96 1; to: 1.04 1.04 1; dir: alternate; dur: 900; loop: true">
           </a-ring>
 
-          <!-- Kvēlojošā laika spirāle -->
-          <a-ring 
-            position="0 0 0.03" 
-            radius-inner="0.63" 
-            radius-outer="0.65" 
-            material="color: #f59e0b; emissive: #d97706; emissiveIntensity: 2.0;"
-            animation="property: rotation; to: 0 0 360; dur: 12000; easing: linear; loop: true">
-          </a-ring>
-
-          <!-- 2. Akmens eja dziļumā (0.8 m) -->
-          <a-cylinder 
-            position="0 0 -0.4" 
-            rotation="90 0 0" 
-            radius="0.64" 
-            height="0.8" 
-            open-ended="true" 
-            side="back" 
-            material="src: #stoneTexture; roughness: 0.7; color: #57534e;">
-          </a-cylinder>
-
-          <!-- 3. Portāla dibens ar smēdes video -->
-          <a-circle 
-            position="0 0 -0.8" 
-            radius="0.64" 
-            side="front" 
-            material="src: #smedeVideo; shader: flat;">
-          </a-circle>
-
-          <!-- Uguns atblāzmas pulsācija portāla iekšpusē -->
+          <!-- Spēcīga sarkana gaisma telpā -->
           <a-entity 
-            light="type: point; intensity: 2.5; distance: 2.5; color: #f97316;" 
-            position="0 0 -0.4"
-            animation="property: light.intensity; from: 1.8; to: 3.2; dir: alternate; dur: 400; loop: true">
+            light="type: point; intensity: 5.0; distance: 6; color: #ef4444;" 
+            position="0 0 0.3"
+            animation="property: light.intensity; from: 3.5; to: 6.0; dir: alternate; dur: 450; loop: true">
           </a-entity>
 
+          <!-- Teksts novietots augstāk virs 4x lielās plaisas -->
           <a-text 
-            value="ADATU KALĒJI • 18. GADSIMTS" 
-            position="0 0.95 0.05" 
+            value="18. GADSIMTS • ADATU SMĒDE" 
+            position="0 3.7 0.05" 
             align="center" 
-            scale="0.6 0.6 0.6" 
-            color="#fbbf24">
+            scale="1.2 1.2 1.2" 
+            color="#ef4444">
           </a-text>
 
         </a-entity>
@@ -177,9 +193,7 @@
       const portal = document.querySelector('#portalContainer');
 
       let openTimer = null;
-      let isPortalOpen = false;
 
-      // Lietotājs atļauj video/audio
       startBtn.addEventListener('click', () => {
         video.play().then(() => {
           video.pause();
@@ -190,71 +204,58 @@
         statusBox.style.display = 'block';
       });
 
-      // Mērķis atrasts kameras skatā
       target.addEventListener('targetFound', () => {
-        statusText.innerHTML = "Atzīme atrasta. Sinhronizējas ar 18. gs...";
-
-        // 2 sekunžu aizture pirms atvēršanās
+        statusText.innerHTML = "Plīsums telpā atrasts. Veras vaļā...";
         openTimer = setTimeout(() => {
-          openPortal();
-        }, 2000);
+          openRift();
+        }, 1800);
       });
 
-      // Mērķis pazaudēts no skata
       target.addEventListener('targetLost', () => {
         if (openTimer) clearTimeout(openTimer);
-        closePortalQuickly();
+        closeRiftQuick();
         statusText.innerText = "Pavērsiet kameru pret attēlu";
       });
 
-      // Portāla lēna atvēršanās
-      function openPortal() {
-        isPortalOpen = true;
+      function openRift() {
         portal.setAttribute('visible', 'true');
-        statusText.innerHTML = "Portāls atvērts! <b>Ieskaties 18. gadsimtā</b>";
+        statusText.innerHTML = "Plaisa atvērta! <b>Ieskaties 18. gadsimtā</b>";
 
-        // Animējam mērogu no 0 līdz 1 divu sekunžu laikā
         portal.removeAttribute('animation');
         portal.setAttribute('animation', {
           property: 'scale',
           from: '0 0 0',
           to: '1 1 1',
-          dur: 2000,
-          easing: 'easeOutBack'
+          dur: 1800,
+          easing: 'easeOutElastic'
         });
 
-        // Palaižam video un skaņu
         video.currentTime = 0;
         video.play();
       }
 
-      // Video beigu notikums — lēna aizvēršanās
       video.addEventListener('ended', () => {
-        statusText.innerHTML = "Laika saikne pārtrūka. Portāls aizveras...";
+        statusText.innerHTML = "Plaisa aizveras...";
 
-        // Lēni saraujam portālu 1.5 sekunžu laikā
         portal.removeAttribute('animation');
         portal.setAttribute('animation', {
           property: 'scale',
           from: '1 1 1',
           to: '0 0 0',
-          dur: 1500,
-          easing: 'easeInQuad'
+          dur: 1400,
+          easing: 'easeInBack'
         });
 
         setTimeout(() => {
           portal.setAttribute('visible', 'false');
-          isPortalOpen = false;
-          statusText.innerText = "Portāls noslēdzies. Pavērsiet kameru no jauna.";
-        }, 1500);
+          statusText.innerText = "Plaisa noslēgusies. Pavērsiet kameru no jauna.";
+        }, 1400);
       });
 
-      // Ātra aizvēršana, ja telefons tiek novērsts projām
-      function closePortalQuickly() {
+      function closeRiftQuick() {
         video.pause();
         portal.setAttribute('visible', 'false');
         portal.setAttribute('scale', '0 0 0');
-        isPortalOpen = false;
       }
     </script>
   </body>
