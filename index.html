@@ -68,14 +68,13 @@
     </style>
 
     <script>
-      // Ģenerē milzīgu, neregulāru plaisu (4 reizes lielāka)
       AFRAME.registerComponent('rift-portal', {
         init: function () {
           const shape = new THREE.Shape();
           const pointsCount = 60;
-          // Pamatrādiuss palielināts 4x: no 0.68 uz 2.72 metriem
           const radiusBase = 2.72;
 
+          // Ģenerē neregulāru formu
           for (let i = 0; i <= pointsCount; i++) {
             const theta = (i / pointsCount) * Math.PI * 2;
             const noise = Math.sin(theta * 5) * 0.32 + Math.cos(theta * 3) * 0.20 + (Math.sin(theta * 9) * 0.12);
@@ -88,6 +87,26 @@
 
           const geometry = new THREE.ShapeGeometry(shape);
           
+          // PRECIZA UV KARTĒŠANA: izstiepj video pāri visai ģeometrijai bez blūra
+          geometry.computeBoundingBox();
+          const bbox = geometry.boundingBox;
+          const sizeX = bbox.max.x - bbox.min.x;
+          const sizeY = bbox.max.y - bbox.min.y;
+          
+          const pos = geometry.attributes.position;
+          const uvs = [];
+
+          for (let i = 0; i < pos.count; i++) {
+            const x = pos.getX(i);
+            const y = pos.getY(i);
+            // Normalizē koordinātas no 0 līdz 1 pa visu laukumu
+            const u = (x - bbox.min.x) / sizeX;
+            const v = (y - bbox.min.y) / sizeY;
+            uvs.push(u, v);
+          }
+
+          geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+
           const videoEl = document.querySelector('#smedeVideo');
           const videoTexture = new THREE.VideoTexture(videoEl);
           videoTexture.minFilter = THREE.LinearFilter;
@@ -102,7 +121,7 @@
           mesh.position.z = 0.02;
           this.el.setObject3D('mesh', mesh);
 
-          // Kvēlojošā ārējā līnija
+          // Kvēlojošā mala
           const edgePoints = shape.getPoints();
           const edgeGeometry = new THREE.BufferGeometry().setFromPoints(edgePoints);
           const edgeMaterial = new THREE.LineBasicMaterial({
@@ -148,13 +167,12 @@
 
       <a-entity id="portalTarget" mindar-image-target="targetIndex: 0">
         
-        <!-- PLAISAS KONTEINERS -->
         <a-entity id="portalContainer" scale="0 0 0" visible="false">
           
-          <!-- Milzīgā organiskā plaisa ar video -->
+          <!-- Plaisa ar pilna izmēra video bez izstieptām malām -->
           <a-entity rift-portal></a-entity>
 
-          <!-- 4x lielāks ārējais enerģijas oreols (rādiuss 2.6m - 3.4m) -->
+          <!-- Ārējais pulsējošais oreols -->
           <a-ring 
             position="0 0 0.01" 
             radius-inner="2.6" 
@@ -163,14 +181,13 @@
             animation="property: scale; from: 0.96 0.96 1; to: 1.04 1.04 1; dir: alternate; dur: 900; loop: true">
           </a-ring>
 
-          <!-- Spēcīga sarkana gaisma telpā -->
+          <!-- Sarkana gaisma -->
           <a-entity 
             light="type: point; intensity: 5.0; distance: 6; color: #ef4444;" 
             position="0 0 0.3"
             animation="property: light.intensity; from: 3.5; to: 6.0; dir: alternate; dur: 450; loop: true">
           </a-entity>
 
-          <!-- Teksts novietots augstāk virs 4x lielās plaisas -->
           <a-text 
             value="18. GADSIMTS • ADATU SMĒDE" 
             position="0 3.7 0.05" 
